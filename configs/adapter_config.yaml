@@ -1,0 +1,57 @@
+# SAM3 LoRA Training Configuration
+# Full LoRA configuration - applies LoRA to ALL transformer components
+# Use this for maximum adaptation capacity (more trainable parameters)
+
+# Model settings
+model:
+  name: "jetjodh/sam3"
+  cache_dir: null
+
+# Training settings
+training:
+  data_dir: "/data/Data/ft_sam3/coco_vegann"  # Root directory containing train/valid/test folders with COCO annotations
+  batch_size: 4      # Increased from 1 to reduce gradient variance
+  num_workers: 2        # Increase for better data loading
+
+  learning_rate: 5e-5        # Increased from 1e-5 (SAM3 uses 1e-4 to 5e-4 for fine-tuning)
+  weight_decay: 0.01
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  adam_epsilon: 1e-8
+  max_grad_norm: 1.0
+
+  num_epochs: 100       # Reduced from 500 (small dataset overfits quickly)
+  val_epoch_freq: 5     # Run validation every N epochs; final epoch is always validated
+  warmup_steps: 200     # Reduced from 1000 (proportional to dataset size)
+  lr_scheduler: "cosine"
+
+  logging_steps: 10
+  eval_steps: 100       # More frequent validation (from 500)
+  save_steps: 100       # More frequent checkpoints (from 1000)
+  save_total_limit: 5   # Keep more checkpoints
+
+  mixed_precision: "bf16"    # Use bfloat16 if available
+  seed: 42
+  gradient_accumulation_steps: 8  # Reduced from 16 (effective batch: 2×8=16)
+
+output:
+  output_dir: "/data/weights/ft_sam3/outputs/sam3_adapter_full"
+  logging_dir: "logs"
+  save_lora_only: true
+  push_to_hub: false
+  hub_model_id: null
+
+evaluation:
+  metric: "iou"
+  prob_threshold: 0.3
+  mask_threshold: 0.5
+  save_predictions: false
+  compute_metrics_during_training: true
+
+hardware:
+  device: "cuda"
+  dataloader_pin_memory: true
+  use_compile: false
+
+data:
+  image_size: 504
